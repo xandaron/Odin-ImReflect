@@ -104,9 +104,9 @@ main :: proc() {
 
 | Procedure | Description |
 |---|---|
-| `init()` | Initialises GLFW, creates a 700×700 window, and sets up ImGui with the OpenGL3 backend. Returns `false` on failure. |
+| `init(width, height)` | Initialises GLFW, creates a `width`×`height` window, and sets up ImGui with the OpenGL3 backend. Returns `false` on failure. |
 | `shutdown()` | Tears down ImGui, the OpenGL3 backend, GLFW, and destroys the window. |
-| `start_frame(ui_name)` | Polls events, begins a new ImGui frame, and opens a window with the given name. Returns `false` when the window should close — use it directly as your loop condition. |
+| `start_frame(name)` | Polls events, begins a new ImGui frame, and opens a window with the given name. Returns `false` when the window should close — use it directly as your loop condition. |
 | `end_frame()` | Renders the frame, swaps buffers, and flushes the temp allocator. |
 
 > **Note:** The bootstrap package is intentionally minimal — it is designed for quick inspection and demos. For production use you will want to manage your own window, context, and render loop.

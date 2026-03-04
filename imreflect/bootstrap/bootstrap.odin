@@ -33,7 +33,7 @@ internal_allocator: mem.Allocator
 @(private)
 ctx: ^imgui.GuiContext
 
-init :: proc(allocator := context.allocator) -> bool {
+init :: proc(width, height: i32, allocator := context.allocator) -> bool {
 	internal_allocator = allocator
 	if !glfw.Init() {
 		fmt.println("Failed init GLFW")
@@ -45,7 +45,7 @@ init :: proc(allocator := context.allocator) -> bool {
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 	glfw.WindowHint(glfw.RESIZABLE, false)
 
-	window = glfw.CreateWindow(700, 700, "Demo", nil, nil)
+	window = glfw.CreateWindow(width, height, "Demo", nil, nil)
 	if window == nil {
 		fmt.println("Failed window create.")
 		return false
@@ -79,7 +79,7 @@ shutdown :: proc() {
 	glfw.Terminate()
 }
 
-start_frame :: proc(ui_name: cstring) -> bool {
+start_frame :: proc(name: cstring) -> bool {
 	if glfw.WindowShouldClose(window) {
 		return false
 	}
@@ -90,7 +90,7 @@ start_frame :: proc(ui_name: cstring) -> bool {
 	imguiGLFW.NewFrame()
 	imgui.Gui_NewFrame()
 
-	imgui.Gui_Begin(ui_name, nil, nil)
+	imgui.Gui_Begin(name, nil, nil)
 
 	return true
 }

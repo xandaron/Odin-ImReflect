@@ -9,7 +9,7 @@ import imrefl "../imreflect"
 import bootstrap "../imreflect/bootstrap"
 
 main :: proc() {
-	if !bootstrap.init() {
+	if !bootstrap.init(400, 700) {
 		fmt.print("Failed bootstrap")
 		return
 	}
