@@ -69,6 +69,43 @@ type_id_to_data_type :: proc(id: typeid) -> imgui.GuiDataType {
 	panic("Invalid type id!")
 }
 
+@(private)
+write_i64_to_any :: proc(int64: i64, value: any) {
+	switch reflect.typeid_base_without_enum(value.id) {
+	case i8:      (^i8     )(value.data)^ = auto_cast int64
+	case i16:     (^i16    )(value.data)^ = auto_cast int64
+	case i32:     (^i32    )(value.data)^ = auto_cast int64
+	case i64:     (^i64    )(value.data)^ = auto_cast int64
+	case i128:    (^i128   )(value.data)^ = auto_cast int64
+	case int:     (^int    )(value.data)^ = auto_cast int64
+	case u8:      (^u8     )(value.data)^ = auto_cast int64
+	case u16:     (^u16    )(value.data)^ = auto_cast int64
+	case u32:     (^u32    )(value.data)^ = auto_cast int64
+	case u64:     (^u64    )(value.data)^ = auto_cast int64
+	case u128:    (^u128   )(value.data)^ = auto_cast int64
+	case uint:    (^uint   )(value.data)^ = auto_cast int64
+	case uintptr: (^uintptr)(value.data)^ = auto_cast int64
+	case u16le:   (^u16le  )(value.data)^ = auto_cast int64
+	case u32le:   (^u32le  )(value.data)^ = auto_cast int64
+	case u64le:   (^u64le  )(value.data)^ = auto_cast int64
+	case u128le:  (^u128le )(value.data)^ = auto_cast int64
+	case i16le:   (^i16le  )(value.data)^ = auto_cast int64
+	case i32le:   (^i32le  )(value.data)^ = auto_cast int64
+	case i64le:   (^i64le  )(value.data)^ = auto_cast int64
+	case i128le:  (^i128le )(value.data)^ = auto_cast int64
+	case u16be:   (^u16be  )(value.data)^ = auto_cast int64
+	case u32be:   (^u32be  )(value.data)^ = auto_cast int64
+	case u64be:   (^u64be  )(value.data)^ = auto_cast int64
+	case u128be:  (^u128be )(value.data)^ = auto_cast int64
+	case i16be:   (^i16be  )(value.data)^ = auto_cast int64
+	case i32be:   (^i32be  )(value.data)^ = auto_cast int64
+	case i64be:   (^i64be  )(value.data)^ = auto_cast int64
+	case i128be:  (^i128be )(value.data)^ = auto_cast int64
+	case rune:    (^rune   )(value.data)^ = auto_cast int64
+	case: fmt.panicf("Non supported typeid: %v", value.id)
+	}
+}
+
 // TODO:
 @(private)
 flags_from_field_tag :: proc(tag: reflect.Struct_Tag) -> Draw_Flags {
@@ -140,20 +177,13 @@ draw_bit_set_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	defer imgui.Gui_PopID()
 	if imgui.Gui_TreeNode(fmt.ctprint(name)) {
 		type_info := type_info_of(value.id)
-		enum_id := type_info.variant.(reflect.Type_Info_Bit_Set).elem.id
+		set_info := type_info.variant.(reflect.Type_Info_Bit_Set)
 
-		size: int
-		switch size = type_info.size; size {
-		case 1: value.id = u8
-		case 2: value.id = u16
-		case 4: value.id = u32
-		case 8: value.id = u64
-		case: panic("Invalid/Unsupported type size!")
-		}
+		value.id = runtime.typeid_underlying(value.id)
 		value_u64, _ := reflect.as_u64(value)
 
 		new_val: u64
-		for &enum_value in reflect.enum_fields_zipped(enum_id) {
+		for &enum_value in reflect.enum_fields_zipped(set_info.elem.id) {
 			active := (1 << u64(enum_value.value)) & value_u64 != 0
 			imgui.Gui_Checkbox(fmt.ctprint(enum_value.name), &active)
 			if active {
@@ -161,12 +191,7 @@ draw_bit_set_type :: proc(name: string, value: any, flags: Draw_Flags) {
 			}
 		}
 
-		switch size {
-		case 1: (^u8 )(value.data)^ = auto_cast new_val
-		case 2: (^u16)(value.data)^ = auto_cast new_val
-		case 4: (^u32)(value.data)^ = auto_cast new_val
-		case 8: (^u64)(value.data)^ = new_val
-		}
+		write_i64_to_any(i64(new_val), value)
 		imgui.Gui_TreePop()
 	}
 }
@@ -191,39 +216,7 @@ draw_enum_type :: proc(name: string, value: any, flags: Draw_Flags) {
 			}
 
 			if imgui.Gui_Selectable(fmt.ctprint(enum_value.name)) {
-				switch reflect.typeid_base_without_enum(value.id) {
-				case i8:      (^i8     )(value.data)^ = auto_cast enum_value.value
-				case i16:     (^i16    )(value.data)^ = auto_cast enum_value.value
-				case i32:     (^i32    )(value.data)^ = auto_cast enum_value.value
-				case i64:     (^i64    )(value.data)^ = auto_cast enum_value.value
-				case i128:    (^i128   )(value.data)^ = auto_cast enum_value.value
-				case int:     (^int    )(value.data)^ = auto_cast enum_value.value
-				case u8:      (^u8     )(value.data)^ = auto_cast enum_value.value
-				case u16:     (^u16    )(value.data)^ = auto_cast enum_value.value
-				case u32:     (^u32    )(value.data)^ = auto_cast enum_value.value
-				case u64:     (^u64    )(value.data)^ = auto_cast enum_value.value
-				case u128:    (^u128   )(value.data)^ = auto_cast enum_value.value
-				case uint:    (^uint   )(value.data)^ = auto_cast enum_value.value
-				case uintptr: (^uintptr)(value.data)^ = auto_cast enum_value.value
-				case u16le:   (^u16le  )(value.data)^ = auto_cast enum_value.value
-				case u32le:   (^u32le  )(value.data)^ = auto_cast enum_value.value
-				case u64le:   (^u64le  )(value.data)^ = auto_cast enum_value.value
-				case u128le:  (^u128le )(value.data)^ = auto_cast enum_value.value
-				case i16le:   (^i16le  )(value.data)^ = auto_cast enum_value.value
-				case i32le:   (^i32le  )(value.data)^ = auto_cast enum_value.value
-				case i64le:   (^i64le  )(value.data)^ = auto_cast enum_value.value
-				case i128le:  (^i128le )(value.data)^ = auto_cast enum_value.value
-				case u16be:   (^u16be  )(value.data)^ = auto_cast enum_value.value
-				case u32be:   (^u32be  )(value.data)^ = auto_cast enum_value.value
-				case u64be:   (^u64be  )(value.data)^ = auto_cast enum_value.value
-				case u128be:  (^u128be )(value.data)^ = auto_cast enum_value.value
-				case i16be:   (^i16be  )(value.data)^ = auto_cast enum_value.value
-				case i32be:   (^i32be  )(value.data)^ = auto_cast enum_value.value
-				case i64be:   (^i64be  )(value.data)^ = auto_cast enum_value.value
-				case i128be:  (^i128be )(value.data)^ = auto_cast enum_value.value
-				case rune:    (^rune   )(value.data)^ = auto_cast enum_value.value
-				case: fmt.panicf("Non supported typeid: %v", value.id)
-				}
+				write_i64_to_any(i64(enum_value.value), value)
 				break
 			}
 		}
