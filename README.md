@@ -20,7 +20,7 @@ This makes it ideal for:
 
 ImReflect supports the full breadth of the Odin type system:
 
-[//]: # (TODO: replace description with images)
+(TODO: replace description with images)
 | Category | Types |
 |---|---|
 | **Integers** | `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, `u64`, `int`, `uint`, `uintptr`, `rune`, and all `le`/`be` variants |
