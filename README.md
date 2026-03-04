@@ -66,7 +66,7 @@ All scalar fields (integers, floats, booleans, enums, bit sets) are **editable l
 Clone the repository into your project or alongside your packages:
 
 ```sh
-git clone https://github.com/your-username/Odin-ImReflect
+git clone https://github.com/xandaron/Odin-ImReflect
 ```
 
 Then import the package from your code:

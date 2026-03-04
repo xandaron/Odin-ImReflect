@@ -41,12 +41,12 @@ draw_value :: proc(name: string, value: any, flags: Draw_Flags = nil) {
 	}
 }
 
-@(private = "file")
+@(private)
 assert_kind :: #force_inline proc(got, expected: reflect.Type_Kind, loc := #caller_location) {
 	fmt.assertf(got == expected, "Value type kind must be %v! Got %v", expected, got, loc = loc)
 }
 
-@(private = "file")
+@(private)
 type_id_to_data_type :: proc(id: typeid) -> imgui.GuiDataType {
 	switch id { // what should I do with be and le types? I might have to convert the type first
 	case i8:        return .S8
@@ -70,11 +70,12 @@ type_id_to_data_type :: proc(id: typeid) -> imgui.GuiDataType {
 }
 
 // TODO:
-@(private = "file")
+@(private)
 flags_from_field_tag :: proc(tag: reflect.Struct_Tag) -> Draw_Flags {
 	return nil
 }
 
+@(private)
 draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Struct)
 
@@ -89,6 +90,7 @@ draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_bit_field_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Bit_Field)
 
@@ -104,6 +106,7 @@ draw_bit_field_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_union_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Union)
 
@@ -128,6 +131,7 @@ draw_union_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_bit_set_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	value := value
 	assert_kind(reflect.type_kind(value.id), .Bit_Set)
@@ -167,6 +171,7 @@ draw_bit_set_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_enum_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Enum)
 
@@ -226,6 +231,7 @@ draw_enum_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_any_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Any)
 
@@ -244,6 +250,7 @@ draw_any_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_type_id :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Type_Id)
 	imgui.Gui_PushIDPtr(value.data)
@@ -251,6 +258,7 @@ draw_type_id :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_TextEx(fmt.ctprintf("%s: %v", name, (^typeid)(value.data)^))
 }
 
+@(private)
 draw_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Pointer)
 	
@@ -265,6 +273,7 @@ draw_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_string_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .String)
 	
@@ -279,6 +288,7 @@ draw_string_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_complex_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Complex)
 	real, imag: rawptr
@@ -309,6 +319,7 @@ draw_complex_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_InputScalar(fmt.ctprintf("i %s", name), data_type, imag)
 }
 
+@(private)
 draw_quat_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Quaternion)
 	data_type: imgui.GuiDataType
@@ -324,6 +335,7 @@ draw_quat_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_DragScalarN(fmt.ctprint(name), data_type, value.data, 4)
 }
 
+@(private)
 draw_bool_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Boolean)
 	value_bool, _ := reflect.as_bool(value)
@@ -341,6 +353,7 @@ draw_bool_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_literal_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	kind := reflect.type_kind(value.id)
 	fmt.assertf(kind == .Integer || kind == .Float || kind == .Rune, "Value type kind must be %v, %v or %v! Got %v", reflect.Type_Kind.Integer, reflect.Type_Kind.Float, reflect.Type_Kind.Rune, kind)
@@ -350,6 +363,7 @@ draw_literal_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_InputScalar(fmt.ctprint(name), type_id_to_data_type(value.id), value.data)
 }
 
+@(private)
 draw_map_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Map)
 
@@ -379,6 +393,7 @@ draw_map_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_matrix_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Matrix)
 
@@ -413,6 +428,7 @@ draw_matrix_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_array_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Array)
 	
@@ -427,6 +443,7 @@ draw_array_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_slice_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Slice)
 
@@ -445,6 +462,7 @@ draw_slice_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_enum_array_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Enumerated_Array)
 
@@ -457,6 +475,7 @@ draw_enum_array_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_dyn_array_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Dynamic_Array)
 
@@ -474,6 +493,7 @@ draw_dyn_array_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	}
 }
 
+@(private)
 draw_multi_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Multi_Pointer)
 
@@ -483,6 +503,7 @@ draw_multi_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	draw_pointer_type(name, any{value.data, typeid_of(rawptr)}, nil)
 }
 
+@(private)
 draw_simd_vec_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Simd_Vector)
 
@@ -500,6 +521,7 @@ draw_simd_vec_type :: proc(name: string, value: any, flags: Draw_Flags) {
 
 // TODO: What's this even meant to represent?
 // How should we display this?
+@(private)
 draw_soa_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Soa_Pointer)
 
@@ -514,6 +536,7 @@ draw_soa_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 
 // What should this even do? I'll just write the proc address.
 // Maybe we can make the proc callable with struct tags.
+@(private)
 draw_proc_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Procedure)
 
