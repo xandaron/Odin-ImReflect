@@ -101,10 +101,10 @@ odin run demo
 - **Multi-pointers (`[^]T`)** — length information is not available via reflection, so only the raw address is shown. A future struct tag may be able to annotate a length.
 - **Enumerated arrays** — tree node is rendered but element iteration is not yet implemented.
 - **SOA pointers** — tree node renders but no data is displayed.
-- **Struct tags** — only `read-only` is currently recognised. Planned expansion to support things like value ranges, custom labels, and more.
 - **Endian-specific integers** (`i16le`, `u32be`, etc.) — mapped through `type_id_to_data_type` conservatively; display may not account for byte-swapping on big-endian hosts.
 - **Procedures** — only the function pointer address is shown. Invoking procedures via struct tags is a possible future feature.
 - **String editing** — future plans to use a string buffer to enable editing of strings.
+- **Struct tags** — plans to add more tags to allow for more control over field formatting.
 
 ---
 
