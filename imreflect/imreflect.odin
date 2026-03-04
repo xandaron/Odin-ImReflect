@@ -13,6 +13,7 @@ Draw_Flag :: enum {
 
 	// For internal use.
 	Using_Flatten,
+	Padding,
 }
 Draw_Flags :: bit_set[Draw_Flag]
 
@@ -153,6 +154,7 @@ read_int_any_as_type :: proc(value: any, $T: typeid) -> T {
 tag_value_to_flag :: proc(str: string) -> (Draw_Flag, bool) {
 	switch str {
 	case "read-only": return .Read_Only, true
+	case "padding":   return .Padding,   true
 	}
 	return nil, false
 }
@@ -192,6 +194,10 @@ draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 		bytes := ([^]byte)(value.data)
 		for &field in reflect.struct_fields_zipped(value.id) {
 			field_flags := flags + flags_from_field_tag(field.tag)
+			if .Padding in field_flags {
+				continue
+			}
+
 			if field.is_using && field.name == "_" {
 				field_flags += {.Using_Flatten}
 			}

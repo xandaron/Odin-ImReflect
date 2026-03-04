@@ -47,7 +47,7 @@ main :: proc() {
 
 	Struct :: struct {
 		x, y, z: f32,
-		ptr: ^Struct,
+		ptr:     ^Struct,
 	}
 	stru: Struct = {
 		x = 1,
@@ -77,17 +77,17 @@ main :: proc() {
 	arr: [4]int = {0, 1, 2, 3}
 	slice: []int = arr[:]
 	dyn: [dynamic]int = {0, 1, 2, 3}
-	
+
 	alloc_ptr, _ := mem.alloc(4 * size_of(int))
 	defer free(alloc_ptr)
 	mult := ([^]int)(alloc_ptr)
-	
+
 	mapp: map[int]string
 	mapp[10] = "ten"
 	mapp[2] = "two"
 	mapp[4] = "four"
 	defer delete(mapp)
-	
+
 	mat: matrix[4, 4]int = 1
 	mat[2, 3] = 10
 
@@ -99,6 +99,7 @@ main :: proc() {
 	Using_Struct :: struct {
 		using _: Struct,
 		using _: Raw `imrefl:"read-only"`,
+		_:       [4]byte `imrefl:"padding"`,
 		using _: Bit_Field,
 	}
 	using_struct: Using_Struct

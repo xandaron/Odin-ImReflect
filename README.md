@@ -66,13 +66,15 @@ That's it. ImReflect will recursively build the entire UI for you.
 | Flag | Tag | Description |
 |---|---|---|
 | `Read_Only` | `read-only` | Disables all editable widgets, rendering the value for inspection only. |
+| `Padding` | `padding` | Used to stop a struct field from being drawn. |
 
 Flags can also be applied on a per-field basis using the `imrefl` struct tag. Multiple values can be comma-separated.
 
 ```odin
 My_Struct :: struct {
     editable_field:   int,
-    read_only_field:  int `imrefl:"read-only,other-flag"`,
+    read_only_field:  int `imrefl:"read-only"`,
+    _:                [4]byte `imrefl:"padding"`,
 }
 ```
 
