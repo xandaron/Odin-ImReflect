@@ -106,6 +106,43 @@ write_i64_to_any :: proc(int64: i64, value: any) {
 	}
 }
 
+@(private)
+read_int_any_as_type :: proc(value: any, $T: typeid) -> T {
+	switch reflect.typeid_base_without_enum(value.id) {
+	case i8:      return auto_cast (^i8     )(value.data)^
+	case i16:     return auto_cast (^i16    )(value.data)^
+	case i32:     return auto_cast (^i32    )(value.data)^
+	case i64:     return auto_cast (^i64    )(value.data)^
+	case i128:    return auto_cast (^i128   )(value.data)^
+	case int:     return auto_cast (^int    )(value.data)^
+	case u8:      return auto_cast (^u8     )(value.data)^
+	case u16:     return auto_cast (^u16    )(value.data)^
+	case u32:     return auto_cast (^u32    )(value.data)^
+	case u64:     return auto_cast (^u64    )(value.data)^
+	case u128:    return auto_cast (^u128   )(value.data)^
+	case uint:    return auto_cast (^uint   )(value.data)^
+	case uintptr: return auto_cast (^uintptr)(value.data)^
+	case u16le:   return auto_cast (^u16le  )(value.data)^
+	case u32le:   return auto_cast (^u32le  )(value.data)^
+	case u64le:   return auto_cast (^u64le  )(value.data)^
+	case u128le:  return auto_cast (^u128le )(value.data)^
+	case i16le:   return auto_cast (^i16le  )(value.data)^
+	case i32le:   return auto_cast (^i32le  )(value.data)^
+	case i64le:   return auto_cast (^i64le  )(value.data)^
+	case i128le:  return auto_cast (^i128le )(value.data)^
+	case u16be:   return auto_cast (^u16be  )(value.data)^
+	case u32be:   return auto_cast (^u32be  )(value.data)^
+	case u64be:   return auto_cast (^u64be  )(value.data)^
+	case u128be:  return auto_cast (^u128be )(value.data)^
+	case i16be:   return auto_cast (^i16be  )(value.data)^
+	case i32be:   return auto_cast (^i32be  )(value.data)^
+	case i64be:   return auto_cast (^i64be  )(value.data)^
+	case i128be:  return auto_cast (^i128be )(value.data)^
+	case rune:    return auto_cast (^rune   )(value.data)^
+	}
+	fmt.panicf("Non supported typeid: %v", value.id)
+}
+
 // TODO:
 @(private)
 flags_from_field_tag :: proc(tag: reflect.Struct_Tag) -> Draw_Flags {
@@ -180,7 +217,7 @@ draw_bit_set_type :: proc(name: string, value: any, flags: Draw_Flags) {
 		set_info := type_info.variant.(reflect.Type_Info_Bit_Set)
 
 		value.id = runtime.typeid_underlying(value.id)
-		value_u64, _ := reflect.as_u64(value)
+		value_u64 := read_int_any_as_type(value, u64)
 
 		new_val: u64
 		for &enum_value in reflect.enum_fields_zipped(set_info.elem.id) {
@@ -209,7 +246,7 @@ draw_enum_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_PushIDPtr(value.data)
 	defer imgui.Gui_PopID()
 	if imgui.Gui_BeginCombo(fmt.ctprint(name), fmt.ctprint(reflect.enum_string(value)), nil) {
-		value_i64, _ := reflect.as_i64(value)
+		value_i64 := read_int_any_as_type(value, i64)
 		for &enum_value in reflect.enum_fields_zipped(value.id) {
 			if i64(enum_value.value) == value_i64 {
 				continue
