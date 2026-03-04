@@ -1,4 +1,4 @@
-package ImGui_Reflect
+package ImRefl
 
 import "base:runtime"
 import "core:fmt"

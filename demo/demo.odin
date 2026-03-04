@@ -12,17 +12,7 @@ import imguiGLFW "../imgui/glfw"
 import imguiOpenGL "../imgui/opengl3"
 
 import imrefl "../imreflect"
-
-imguiAlloc :: proc "c" (sz: c.size_t, user_data: rawptr) -> rawptr {
-	context = runtime.default_context()
-	ptr, _ := mem.alloc(int(sz), allocator = (^mem.Allocator)(user_data)^)
-	return ptr
-}
-
-imguiFree :: proc "c" (ptr: rawptr, user_data: rawptr) {
-	context = runtime.default_context()
-	mem.free(ptr, allocator = (^mem.Allocator)(user_data)^)
-}
+import bootstrap "../imreflect/bootstrap"
 
 My_Enum :: enum {
 	_0 = 0,
@@ -99,52 +89,11 @@ My_Struct :: struct {
 }
 
 main :: proc() {
-	defer {
-		free_all(context.temp_allocator)
-		free_all(context.allocator)
-	}
-
-	if !glfw.Init() {
-		fmt.println("Failed init GLFW")
+	if !bootstrap.init() {
+		fmt.print("Failed bootstrap")
 		return
 	}
-	defer glfw.Terminate()
-
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, 3)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, 3)
-	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-	glfw.WindowHint(glfw.RESIZABLE, false)
-
-	window := glfw.CreateWindow(700, 700, "Demo", nil, nil)
-	if window == nil {
-		fmt.println("Failed window create.")
-		return
-	}
-	defer glfw.DestroyWindow(window)
-	glfw.MakeContextCurrent(window)
-	glfw.SwapInterval(1)
-
-	allocator := new(mem.Allocator)
-	allocator^ = context.allocator
-	imgui.Gui_SetAllocatorFunctions(imguiAlloc, imguiFree, allocator)
-	defer free(allocator)
-
-	ctx := imgui.Gui_CreateContext(nil)
-	defer imgui.Gui_DestroyContext(ctx)
-	imgui.Gui_StyleColorsDark(nil)
-
-	if !imguiGLFW.InitForOpenGL(window, true) {
-		fmt.println("Failed init imgui glfw.")
-		return
-	}
-	defer imguiGLFW.Shutdown()
-
-	OpenGL.load_up_to(3, 3, glfw.gl_set_proc_address)
-	if !imguiOpenGL.Init() {
-		fmt.println("Failed init imgui OpenGL.")
-		return
-	}
-	defer imguiOpenGL.Shutdown()
+	defer bootstrap.shutdown()
 
 	// test2 functions to make sure anon types still output correctly
 	test2: struct {
@@ -207,31 +156,13 @@ main :: proc() {
 		fmt.print(text)
 	}
 
-	for !glfw.WindowShouldClose(window) {
-		glfw.PollEvents()
-
-		imguiOpenGL.NewFrame()
-		imguiGLFW.NewFrame()
-		imgui.Gui_NewFrame()
-
-		imgui.Gui_Begin("Demo", nil, nil)
-
+	for bootstrap.start_frame("Demo") {
 		imrefl.draw_value("test", test)
 		imrefl.draw_value("test2", test2)
-
-		imgui.Gui_End()
-		imgui.Gui_EndFrame()
-
-		// Rendering
-		width, height := glfw.GetFramebufferSize(window)
-		OpenGL.Viewport(0, 0, width, height)
-		OpenGL.ClearColor(100.0 / 255.0, 149.0 / 255.0, 237.0 / 255.0, 1)
-		OpenGL.Clear(OpenGL.COLOR_BUFFER_BIT)
-		imgui.Gui_Render()
-		imguiOpenGL.RenderDrawData(imgui.Gui_GetDrawData())
-
-		glfw.SwapBuffers(window)
-		free_all(context.temp_allocator)
+		bootstrap.end_frame()
 	}
+
+	free_all(context.temp_allocator)
+	free_all(context.allocator)
 }
 
