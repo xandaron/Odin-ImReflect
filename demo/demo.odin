@@ -11,7 +11,7 @@ import imgui "../imgui"
 import imguiGLFW "../imgui/glfw"
 import imguiOpenGL "../imgui/opengl3"
 
-import imrefl "../src"
+import imrefl "../imreflect"
 
 imguiAlloc :: proc "c" (sz: c.size_t, user_data: rawptr) -> rawptr {
 	context = runtime.default_context()
