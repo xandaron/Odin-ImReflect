@@ -402,8 +402,10 @@ draw_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	
 	imgui.Gui_PushIDPtr(value.data)
 	defer imgui.Gui_PopID()
-
-	if value.id == rawptr {
+	
+	if (^rawptr)(value.data)^ == nil {
+		imgui.Gui_TextEx(fmt.ctprintf("%s: nil", name))
+	} else if value.id == rawptr {
 		imgui.Gui_TextEx(fmt.ctprintf("%s: %v", name, (^rawptr)(value.data)^))
 	} else {
 		pointee_type_id := type_info_of(value.id).variant.(reflect.Type_Info_Pointer).elem.id
