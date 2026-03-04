@@ -544,9 +544,9 @@ draw_literal_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	defer imgui.Gui_EndDisabled()
 
 	is_unsigned := reflect.is_unsigned(type_info_of(value.id))
-	container := read_any_int_as(value, u64)
-	if imgui.Gui_InputScalar(fmt.ctprint(name), is_unsigned ? .U64 : .S64, value.data) {
-		write_int_to_any(container, value)
+	tmp := read_any_int_as(value, u64)
+	if imgui.Gui_InputScalar(fmt.ctprint(name), is_unsigned ? .U64 : .S64, &tmp) {
+		write_int_to_any(tmp, value)
 	}
 }
 
@@ -560,9 +560,9 @@ draw_float_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_BeginDisabled(.Read_Only in flags)
 	defer imgui.Gui_EndDisabled()
 
-	container := read_any_float_as(value, f64)
-	if imgui.Gui_InputScalar(fmt.ctprint(name), .Double, &container) {
-		write_float_to_any(container, value)
+	tmp := read_any_float_as(value, f64)
+	if imgui.Gui_InputScalar(fmt.ctprint(name), .Double, &tmp) {
+		write_float_to_any(tmp, value)
 	}
 }
 
