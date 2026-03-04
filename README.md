@@ -16,29 +16,6 @@ This makes it ideal for:
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- [Odin compiler](https://odin-lang.org/docs/install/)
-- A working Dear ImGui setup. I maintain the bundled `imgui` package [here](https://github.com/xandaron/odin-dear-imgui) where a vulkan backend can be found.
-
-### Installation
-
-Clone the repository into your project or alongside your packages:
-
-```sh
-git clone https://github.com/xandaron/Odin-ImReflect
-```
-
-Then import the package from your code:
-
-```odin
-import imrefl "path/to/imreflect"
-```
-
----
-
 ## Usage
 
 The entire public API is a single procedure:
@@ -99,17 +76,10 @@ main :: proc() {
 
     for bootstrap.start_frame("Inspector") {
         imrefl.draw_value("my_data", my_data)
-        bootstrap.end_frame()
+        bootstrap.end_frame() // Calls free_all(context.temp_allocator)
     }
 }
 ```
-
-| Procedure | Description |
-|---|---|
-| `init(width, height)` | Initialises GLFW, creates a `width`×`height` window, and sets up ImGui with the OpenGL3 backend. Returns `false` on failure. |
-| `shutdown()` | Tears down ImGui, the OpenGL3 backend, GLFW, and destroys the window. |
-| `start_frame(name)` | Polls events, begins a new ImGui frame, and opens a window with the given name. Returns `false` when the window should close — use it directly as your loop condition. |
-| `end_frame()` | Renders the frame, swaps buffers, and flushes the temp allocator. |
 
 > **Note:** The bootstrap package is intentionally minimal — it is designed for quick inspection and demos. For production use you will want to manage your own window, context, and render loop.
 
