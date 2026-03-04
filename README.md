@@ -36,26 +36,24 @@ imgui.Gui_End()
 
 That's it. ImReflect will recursively build the entire UI for you.
 
-### Flags
+### Tags
 
-`draw_value` accepts a `Draw_Flags` bit set as an optional third argument to control rendering behaviour.
-
-| Flag | Tag | Description |
-|---|---|---|
-| `Read_Only` | `read-only` | Disables all editable widgets, rendering the value for inspection only. |
-| `Padding` | `padding` | Used to stop a struct field from being drawn. |
-
-Flags can also be applied on a per-field basis using the `imrefl` struct tag. Multiple values can be comma-separated.
+ImReflect parses struct tags using the key `imrefl` to get extra formatting information.
 
 ```odin
 My_Struct :: struct {
-    editable_field:   int,
-    read_only_field:  int `imrefl:"read-only"`,
-    _:                [4]byte `imrefl:"padding"`,
+    editable_field:  int,
+    _:           [4]byte `imrefl:"padding"`,
+    read_only_field: int `imrefl:"read-only"`,
 }
 ```
 
-Flags propagate to nested types meaning a top level `Read_Only` flag will make all sub fields `Read_Only`.
+| Tag | Flag | Description |
+|---|---|---|
+| `read-only` | `Read_Only` | Disables all editable widgets, rendering the value for inspection only. |
+| `padding` | `Padding` | Used to stop a struct field from being drawn. |
+
+You can also pass your flags directly to `draw_value`.
 
 ### Quick Start with the Bootstrap Package
 
@@ -106,6 +104,7 @@ odin run demo
 - **Struct tags** — only `read-only` is currently recognised. Planned expansion to support things like value ranges, custom labels, and more.
 - **Endian-specific integers** (`i16le`, `u32be`, etc.) — mapped through `type_id_to_data_type` conservatively; display may not account for byte-swapping on big-endian hosts.
 - **Procedures** — only the function pointer address is shown. Invoking procedures via struct tags is a possible future feature.
+- **String editing** — future plans to use a string buffer to enable editing of strings.
 
 ---
 
