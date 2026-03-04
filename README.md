@@ -96,7 +96,6 @@ odin run demo
 ## Known Limitations & TODOs
 
 - **Bit fields** — fields are located correctly but might not show correct values and should not be edited.
-- **`f16` / `complex32` / `quaternion64`** — not yet supported due to ImGui having no native f16 scalar type.
 - **128-bit types** — not yet supported due to ImGui having no native 128-bit scalar type.
 - **Multi-pointers (`[^]T`)** — length information is not available via reflection, so only the raw address is shown. A future struct tag may be able to annotate a length.
 - **Enumerated arrays** — tree node is rendered but element iteration is not yet implemented.

@@ -20,30 +20,31 @@ Draw_Flags :: bit_set[Draw_Flag]
 draw_value :: proc(name: string, value: any, flags: Draw_Flags = nil) {
 	switch reflect.type_kind(value.id) {
 	case .Invalid: panic("Invalid Type!")
-	case .Named:                  draw_value(name, any{value.data, reflect.typeid_base(value.id)}, flags)
-	case .Struct:                 draw_struct_type(name, value, flags)
-	case .Bit_Field:              draw_bit_field_type(name, value, flags)
-	case .Union:                  draw_union_type(name, value, flags)
-	case .Bit_Set:                draw_bit_set_type(name, value, flags)
-	case .Enum:                   draw_enum_type(name, value, flags)
-	case .Any:                    draw_any_type(name, value, flags)
-	case .Type_Id:                draw_type_id(name, value, flags)
-	case .Pointer:                draw_pointer_type(name, value, flags)
-	case .String:                 draw_string_type(name, value, flags)
-	case .Complex:                draw_complex_type(name, value, flags)
-	case .Quaternion:             draw_quat_type(name, value, flags)
-	case .Boolean:                draw_bool_type(name, value, flags)
-	case .Integer, .Rune, .Float: draw_literal_type(name, value, flags)
-	case .Map:                    draw_map_type(name, value, flags)
-	case .Matrix:                 draw_matrix_type(name, value, flags)
-	case .Array:                  draw_array_type(name, value, flags)
-	case .Slice:                  draw_slice_type(name, value, flags)
-	case .Enumerated_Array:       draw_enum_array_type(name, value, flags)
-	case .Dynamic_Array:          draw_dyn_array_type(name, value, flags)
-	case .Multi_Pointer:          draw_multi_pointer_type(name, value, flags)
-	case .Simd_Vector:            draw_simd_vec_type(name, value, flags)
-	case .Soa_Pointer:            draw_soa_pointer_type(name, value, flags)
-	case .Procedure:              draw_proc_type(name, value, flags)
+	case .Named:            draw_value(name, any{value.data, reflect.typeid_base(value.id)}, flags)
+	case .Struct:           draw_struct_type(name, value, flags)
+	case .Bit_Field:        draw_bit_field_type(name, value, flags)
+	case .Union:            draw_union_type(name, value, flags)
+	case .Bit_Set:          draw_bit_set_type(name, value, flags)
+	case .Enum:             draw_enum_type(name, value, flags)
+	case .Any:              draw_any_type(name, value, flags)
+	case .Type_Id:          draw_type_id(name, value, flags)
+	case .Pointer:          draw_pointer_type(name, value, flags)
+	case .String:           draw_string_type(name, value, flags)
+	case .Complex:          draw_complex_type(name, value, flags)
+	case .Quaternion:       draw_quat_type(name, value, flags)
+	case .Boolean:          draw_bool_type(name, value, flags)
+	case .Integer, .Rune:   draw_literal_type(name, value, flags)
+	case .Float:            draw_float_type(name,value, flags)
+	case .Map:              draw_map_type(name, value, flags)
+	case .Matrix:           draw_matrix_type(name, value, flags)
+	case .Array:            draw_array_type(name, value, flags)
+	case .Slice:            draw_slice_type(name, value, flags)
+	case .Enumerated_Array: draw_enum_array_type(name, value, flags)
+	case .Dynamic_Array:    draw_dyn_array_type(name, value, flags)
+	case .Multi_Pointer:    draw_multi_pointer_type(name, value, flags)
+	case .Simd_Vector:      draw_simd_vec_type(name, value, flags)
+	case .Soa_Pointer:      draw_soa_pointer_type(name, value, flags)
+	case .Procedure:        draw_proc_type(name, value, flags)
 	case .Parameters: // As is a proc param? I don't think we need to cover this.
 	}
 }
@@ -77,45 +78,45 @@ type_id_to_data_type :: proc(id: typeid) -> imgui.GuiDataType {
 }
 
 @(private)
-write_int_to_any :: proc(int64: $T, value: any) {
-	switch reflect.typeid_base_without_enum(value.id) {
-	case i8:      (^i8     )(value.data)^ = auto_cast int64
-	case i16:     (^i16    )(value.data)^ = auto_cast int64
-	case i32:     (^i32    )(value.data)^ = auto_cast int64
-	case i64:     (^i64    )(value.data)^ = auto_cast int64
-	case i128:    (^i128   )(value.data)^ = auto_cast int64
-	case int:     (^int    )(value.data)^ = auto_cast int64
-	case u8:      (^u8     )(value.data)^ = auto_cast int64
-	case u16:     (^u16    )(value.data)^ = auto_cast int64
-	case u32:     (^u32    )(value.data)^ = auto_cast int64
-	case u64:     (^u64    )(value.data)^ = auto_cast int64
-	case u128:    (^u128   )(value.data)^ = auto_cast int64
-	case uint:    (^uint   )(value.data)^ = auto_cast int64
-	case uintptr: (^uintptr)(value.data)^ = auto_cast int64
-	case u16le:   (^u16le  )(value.data)^ = auto_cast int64
-	case u32le:   (^u32le  )(value.data)^ = auto_cast int64
-	case u64le:   (^u64le  )(value.data)^ = auto_cast int64
-	case u128le:  (^u128le )(value.data)^ = auto_cast int64
-	case i16le:   (^i16le  )(value.data)^ = auto_cast int64
-	case i32le:   (^i32le  )(value.data)^ = auto_cast int64
-	case i64le:   (^i64le  )(value.data)^ = auto_cast int64
-	case i128le:  (^i128le )(value.data)^ = auto_cast int64
-	case u16be:   (^u16be  )(value.data)^ = auto_cast int64
-	case u32be:   (^u32be  )(value.data)^ = auto_cast int64
-	case u64be:   (^u64be  )(value.data)^ = auto_cast int64
-	case u128be:  (^u128be )(value.data)^ = auto_cast int64
-	case i16be:   (^i16be  )(value.data)^ = auto_cast int64
-	case i32be:   (^i32be  )(value.data)^ = auto_cast int64
-	case i64be:   (^i64be  )(value.data)^ = auto_cast int64
-	case i128be:  (^i128be )(value.data)^ = auto_cast int64
-	case rune:    (^rune   )(value.data)^ = auto_cast int64
-	case: fmt.panicf("Non supported typeid: %v", value.id)
+write_int_to_any :: proc(i: $T, value: any) {
+	switch runtime.typeid_underlying(value.id) {
+	case i8:      (^i8     )(value.data)^ = auto_cast i
+	case i16:     (^i16    )(value.data)^ = auto_cast i
+	case i32:     (^i32    )(value.data)^ = auto_cast i
+	case i64:     (^i64    )(value.data)^ = auto_cast i
+	case i128:    (^i128   )(value.data)^ = auto_cast i
+	case int:     (^int    )(value.data)^ = auto_cast i
+	case u8:      (^u8     )(value.data)^ = auto_cast i
+	case u16:     (^u16    )(value.data)^ = auto_cast i
+	case u32:     (^u32    )(value.data)^ = auto_cast i
+	case u64:     (^u64    )(value.data)^ = auto_cast i
+	case u128:    (^u128   )(value.data)^ = auto_cast i
+	case uint:    (^uint   )(value.data)^ = auto_cast i
+	case uintptr: (^uintptr)(value.data)^ = auto_cast i
+	case u16le:   (^u16le  )(value.data)^ = auto_cast i
+	case u32le:   (^u32le  )(value.data)^ = auto_cast i
+	case u64le:   (^u64le  )(value.data)^ = auto_cast i
+	case u128le:  (^u128le )(value.data)^ = auto_cast i
+	case i16le:   (^i16le  )(value.data)^ = auto_cast i
+	case i32le:   (^i32le  )(value.data)^ = auto_cast i
+	case i64le:   (^i64le  )(value.data)^ = auto_cast i
+	case i128le:  (^i128le )(value.data)^ = auto_cast i
+	case u16be:   (^u16be  )(value.data)^ = auto_cast i
+	case u32be:   (^u32be  )(value.data)^ = auto_cast i
+	case u64be:   (^u64be  )(value.data)^ = auto_cast i
+	case u128be:  (^u128be )(value.data)^ = auto_cast i
+	case i16be:   (^i16be  )(value.data)^ = auto_cast i
+	case i32be:   (^i32be  )(value.data)^ = auto_cast i
+	case i64be:   (^i64be  )(value.data)^ = auto_cast i
+	case i128be:  (^i128be )(value.data)^ = auto_cast i
+	case rune:    (^rune   )(value.data)^ = auto_cast i
+	case: fmt.panicf("Non-int typeid: %v", value.id)
 	}
 }
 
 @(private)
-read_int_any_as_type :: proc(value: any, $T: typeid) -> T {
-	switch reflect.typeid_base_without_enum(value.id) {
+read_any_int_as :: proc(value: any, $T: typeid) -> T {
+	switch runtime.typeid_underlying(value.id) {
 	case i8:      return auto_cast (^i8     )(value.data)^
 	case i16:     return auto_cast (^i16    )(value.data)^
 	case i32:     return auto_cast (^i32    )(value.data)^
@@ -146,6 +147,38 @@ read_int_any_as_type :: proc(value: any, $T: typeid) -> T {
 	case i64be:   return auto_cast (^i64be  )(value.data)^
 	case i128be:  return auto_cast (^i128be )(value.data)^
 	case rune:    return auto_cast (^rune   )(value.data)^
+	}
+	fmt.panicf("Non supported typeid: %v", value.id)
+}
+
+@(private)
+write_float_to_any :: proc(f: $T, value: any) {
+	switch runtime.typeid_underlying(value.id) {
+	case f16:   (^f16  )(value.data)^ = auto_cast f
+	case f32:   (^f32  )(value.data)^ = auto_cast f
+	case f64:   (^f64  )(value.data)^ = auto_cast f
+	case f16le: (^f16le)(value.data)^ = auto_cast f
+	case f32le: (^f32le)(value.data)^ = auto_cast f
+	case f64le: (^f64le)(value.data)^ = auto_cast f
+	case f16be: (^f16be)(value.data)^ = auto_cast f
+	case f32be: (^f32be)(value.data)^ = auto_cast f
+	case f64be: (^f64be)(value.data)^ = auto_cast f
+	case: fmt.panicf("Non-float typeid: %v", value.id)
+	}
+}
+
+@(private)
+read_any_float_as :: proc(value: any, $T: typeid) -> T {
+	switch runtime.typeid_underlying(value.id) {
+	case f16:   return auto_cast (^f16  )(value.data)^
+	case f32:   return auto_cast (^f32  )(value.data)^
+	case f64:   return auto_cast (^f64  )(value.data)^
+	case f16le: return auto_cast (^f16le)(value.data)^
+	case f32le: return auto_cast (^f32le)(value.data)^
+	case f64le: return auto_cast (^f64le)(value.data)^
+	case f16be: return auto_cast (^f16be)(value.data)^
+	case f32be: return auto_cast (^f32be)(value.data)^
+	case f64be: return auto_cast (^f64be)(value.data)^
 	}
 	fmt.panicf("Non supported typeid: %v", value.id)
 }
@@ -284,7 +317,7 @@ draw_bit_set_type :: proc(name: string, value: any, flags: Draw_Flags) {
 		set_info := type_info.variant.(reflect.Type_Info_Bit_Set)
 
 		value.id = runtime.typeid_underlying(value.id)
-		value_u64 := read_int_any_as_type(value, u64)
+		value_u64 := read_any_int_as(value, u64)
 
 		imgui.Gui_BeginDisabled(.Read_Only in flags)
 		defer imgui.Gui_EndDisabled()
@@ -320,7 +353,7 @@ draw_enum_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	if imgui.Gui_BeginCombo(fmt.ctprint(name), fmt.ctprint(reflect.enum_string(value)), nil) {
 		defer imgui.Gui_EndCombo()
 
-		value_i64 := read_int_any_as_type(value, i64)
+		value_i64 := read_any_int_as(value, i64)
 		for &enum_value in reflect.enum_fields_zipped(value.id) {
 			if i64(enum_value.value) == value_i64 {
 				continue
@@ -399,16 +432,20 @@ draw_string_type :: proc(name: string, value: any, flags: Draw_Flags) {
 draw_complex_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Complex)
 	real, imag: rawptr
-	data_type: imgui.GuiDataType
+	type: typeid
 	switch value.id {
-	// case complex32:  dataType = .Float // TODO: It's unclear what we should do here
+	case complex32:
+		type = f16
+		raw := (^runtime.Raw_Complex32)(value.data)
+		real = &raw.real
+		imag = &raw.imag
 	case complex64:
-		data_type = .Float
+		type = f32
 		raw := (^runtime.Raw_Complex64)(value.data)
 		real = &raw.real
 		imag = &raw.imag
 	case complex128:
-		data_type = .Double
+		type = f64
 		raw := (^runtime.Raw_Complex128)(value.data)
 		real = &raw.real
 		imag = &raw.imag
@@ -418,26 +455,42 @@ draw_complex_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_PushIDPtr(value.data)
 	defer imgui.Gui_PopID()
 
-	imgui.Gui_BeginDisabled(.Read_Only in flags)
-	defer imgui.Gui_EndDisabled()
-
-	// We could alternatively use imgui.Gui_ScalarN here but we'd lose the text
-	width := imgui.Gui_GetContentRegionAvail().x / 3 // TODO: make this less arbitrary
+	// this is very arbitrary
+	width := (imgui.Gui_GetContentRegionAvail().x - 120 - imgui.Gui_GetStyle().CellPadding.x * 4) / 2
 	imgui.Gui_SetNextItemWidth(width)
-	imgui.Gui_InputScalar("+", data_type, real)
+	draw_float_type("+", any{real, type}, flags)
 	imgui.Gui_SameLine()
 	imgui.Gui_SetNextItemWidth(width)
-	imgui.Gui_InputScalar(fmt.ctprintf("i %s", name), data_type, imag)
+	draw_float_type(fmt.tprintf("i %s", name), any{imag, type}, flags)
 }
 
 @(private)
 draw_quat_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	assert_kind(reflect.type_kind(value.id), .Quaternion)
-	data_type: imgui.GuiDataType
+	ptrs: [4]rawptr
+	type: typeid
 	switch value.id {
-	// case quaternion64:  data_type = // TODO: f16
-	case quaternion128: data_type = .Float
-	case quaternion256: data_type = .Double
+	case quaternion64:
+		type = f16
+		raw := (^runtime.Raw_Quaternion64)(value.data)
+		ptrs[0] = &raw.imag
+		ptrs[1] = &raw.jmag
+		ptrs[2] = &raw.kmag
+		ptrs[3] = &raw.real
+	case quaternion128:
+		type = f32
+		raw := (^runtime.Raw_Quaternion128)(value.data)
+		ptrs[0] = &raw.imag
+		ptrs[1] = &raw.jmag
+		ptrs[2] = &raw.kmag
+		ptrs[3] = &raw.real
+	case quaternion256:
+		type = f64
+		raw := (^runtime.Raw_Quaternion256)(value.data)
+		ptrs[0] = &raw.imag
+		ptrs[1] = &raw.jmag
+		ptrs[2] = &raw.kmag
+		ptrs[3] = &raw.real
 	case: panic("Invalid type id!!")
 	}
 
@@ -447,7 +500,14 @@ draw_quat_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_BeginDisabled(.Read_Only in flags)
 	defer imgui.Gui_EndDisabled()
 
-	imgui.Gui_DragScalarN(fmt.ctprint(name), data_type, value.data, 4)
+	// len(name) * 7 was chosen arbitrarily.
+	width := (imgui.Gui_GetContentRegionAvail().x - 110 - imgui.Gui_GetStyle().CellPadding.x * 7) / 4.0
+	for idx in 0..<4 {
+		imgui.Gui_SetNextItemWidth(width)
+		draw_float_type("", any{ptrs[idx], type}, flags)
+		imgui.Gui_SameLine()
+	}
+	imgui.Gui_TextEx(fmt.ctprint(name))
 }
 
 @(private)
@@ -483,7 +543,27 @@ draw_literal_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	imgui.Gui_BeginDisabled(.Read_Only in flags)
 	defer imgui.Gui_EndDisabled()
 
-	imgui.Gui_InputScalar(fmt.ctprint(name), type_id_to_data_type(value.id), value.data)
+	is_unsigned := reflect.is_unsigned(type_info_of(value.id))
+	container := read_any_int_as(value, u64)
+	if imgui.Gui_InputScalar(fmt.ctprint(name), is_unsigned ? .U64 : .S64, value.data) {
+		write_int_to_any(container, value)
+	}
+}
+
+@(private)
+draw_float_type :: proc(name: string, value: any, flags: Draw_Flags) {
+	assert_kind(reflect.type_kind(value.id), .Float)
+
+	imgui.Gui_PushIDPtr(value.data)
+	defer imgui.Gui_PopID()
+
+	imgui.Gui_BeginDisabled(.Read_Only in flags)
+	defer imgui.Gui_EndDisabled()
+
+	container := read_any_float_as(value, f64)
+	if imgui.Gui_InputScalar(fmt.ctprint(name), .Double, &container) {
+		write_float_to_any(container, value)
+	}
 }
 
 @(private)

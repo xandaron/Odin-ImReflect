@@ -19,8 +19,8 @@ main :: proc() {
 	float32: f32 = 3.1415926
 	bool32: b32 = true
 	str: string = "Test string!"
-	comp: complex128 = complex(4.5, 16.2)
-	quat: quaternion128 = quaternion(x = 1, y = 1, z = 1, w = 0)
+	comp: complex32 = complex(4.5, 16.2)
+	quat: quaternion64 = quaternion(x = 1, y = 1, z = 1, w = 0)
 
 	Enum :: enum {
 		_0,
