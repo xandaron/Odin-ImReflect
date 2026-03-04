@@ -16,44 +16,6 @@ This makes it ideal for:
 
 ---
 
-## Features
-
-ImReflect supports the full breadth of the Odin type system:
-
-(TODO: replace description with images)
-| Category | Types |
-|---|---|
-| **Integers** | `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, `u64`, `int`, `uint`, `uintptr`, `rune`, and all `le`/`be` variants |
-| **Floats** | `f32`, `f64` |
-| **Booleans** | `bool`, `b8`, `b16`, `b32`, `b64` |
-| **Strings** | `string`, `string16`, `cstring`, `cstring16` |
-| **Complex** | `complex64`, `complex128` |
-| **Quaternions** | `quaternion128`, `quaternion256` |
-| **Enums** | Rendered as a dropdown combo box with all named values |
-| **Bit Sets** | Each flag rendered as an interactive checkbox |
-| **Bit Fields** | Expanded as a tree of their constituent fields |
-| **Structs** | Recursively expanded as a collapsible tree node |
-| **Unions** | Shows the active variant tag and recursively renders its data |
-| **Raw Unions** | Expanded as a tree node |
-| **Pointers** | Shows the pointer address; typed pointers are recursively followed and their pointee is rendered |
-| **any** | Shows the `typeid` and recursively renders the contained value |
-| **typeid** | Displays the type name as text |
-| **Arrays** | Expanded as indexed tree nodes |
-| **Slices** | Expanded as indexed tree nodes |
-| **Dynamic Arrays** | Expanded as indexed tree nodes |
-| **Enumerated Arrays** | Expanded as a tree node |
-| **Multi-Pointers** | Displays the raw pointer address |
-| **Maps** | Expanded as indexed tree nodes, each showing key and value |
-| **Matrices** | Rendered as a grid of scalar input fields |
-| **SIMD Vectors** | Expanded as indexed tree nodes |
-| **SOA Pointers** | Expanded as a tree node |
-| **Procedures** | Displays the procedure's address |
-| **Named types** | Transparently unwrapped to their base type |
-
-All scalar fields (integers, floats, booleans, enums, bit sets) are **editable live** — changes are written directly back to the original data.
-
----
-
 ## Getting Started
 
 ### Prerequisites
@@ -97,6 +59,25 @@ imgui.Gui_End()
 
 That's it. ImReflect will recursively build the entire UI for you.
 
+### Flags
+
+`draw_value` accepts a `Draw_Flags` bit set as an optional third argument to control rendering behaviour.
+
+| Flag | Tag | Description |
+|---|---|---|
+| `Read_Only` | `read-only` | Disables all editable widgets, rendering the value for inspection only. |
+
+Flags can also be applied on a per-field basis using the `imrefl` struct tag. Multiple values can be comma-separated.
+
+```odin
+My_Struct :: struct {
+    editable_field:   int,
+    read_only_field:  int `imrefl:"read-only,other-flag"`,
+}
+```
+
+Flags propagate to nested types meaning a top level `Read_Only` flag will make all sub fields `Read_Only`.
+
 ### Quick Start with the Bootstrap Package
 
 If you just want to get something on screen as fast as possible, the `bootstrap` sub-package wraps all of the GLFW + OpenGL3 + ImGui initialisation boilerplate into four calls:
@@ -123,7 +104,7 @@ main :: proc() {
 
 | Procedure | Description |
 |---|---|
-| `init(allocator?)` | Initialises GLFW, creates a 700×700 window, and sets up ImGui with the OpenGL3 backend. Returns `false` on failure. |
+| `init()` | Initialises GLFW, creates a 700×700 window, and sets up ImGui with the OpenGL3 backend. Returns `false` on failure. |
 | `shutdown()` | Tears down ImGui, the OpenGL3 backend, GLFW, and destroys the window. |
 | `start_frame(ui_name)` | Polls events, begins a new ImGui frame, and opens a window with the given name. Returns `false` when the window should close — use it directly as your loop condition. |
 | `end_frame()` | Renders the frame, swaps buffers, and flushes the temp allocator. |
@@ -146,10 +127,11 @@ odin run demo
 
 - **Bit fields** — fields are located correctly but might not show correct values and should not be edited.
 - **`f16` / `complex32` / `quaternion64`** — not yet supported due to ImGui having no native f16 scalar type.
+- **128-bit types** — not yet supported due to ImGui having no native 128-bit scalar type.
 - **Multi-pointers (`[^]T`)** — length information is not available via reflection, so only the raw address is shown. A future struct tag may be able to annotate a length.
 - **Enumerated arrays** — tree node is rendered but element iteration is not yet implemented.
-- **SOA pointers** — tree node renders but data is not yet walked.
-- **Struct tags** — the `flags_from_field_tag` hook exists and is wired up, but no tags are acted on yet. This is the intended extension point for future per-field customisation (e.g. ranges, read-only, custom labels).
+- **SOA pointers** — tree node renders but no data is displayed.
+- **Struct tags** — only `read-only` is currently recognised. Planned expansion to support things like value ranges, custom labels, and more.
 - **Endian-specific integers** (`i16le`, `u32be`, etc.) — mapped through `type_id_to_data_type` conservatively; display may not account for byte-swapping on big-endian hosts.
 - **Procedures** — only the function pointer address is shown. Invoking procedures via struct tags is a possible future feature.
 

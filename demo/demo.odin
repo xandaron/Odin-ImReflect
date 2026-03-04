@@ -21,6 +21,7 @@ main :: proc() {
 	str: string = "Test string!"
 	comp: complex128 = complex(4.5, 16.2)
 	quat: quaternion128 = quaternion(x = 1, y = 1, z = 1, w = 0)
+
 	Enum :: enum {
 		_0,
 		_1,
@@ -30,34 +31,37 @@ main :: proc() {
 	Bit_Set :: bit_set[Enum]
 	enum_val: Enum = ._2
 	bits: Bit_Set = {._0, ._3}
-	field: bit_field u32 {
+
+	Bit_Field :: bit_field u32 {
 		i: u32 | 8,
 		j: u32 | 8,
 		k: u32 | 8,
 		w: u32 | 8,
 	}
+	field: Bit_Field = {
+		i = 10,
+		j = 30,
+		k = 2,
+		w = 100,
+	}
+
 	Struct :: struct {
-		using _: struct {
-			i, j, k: int,
-		},
-		
 		x, y, z: f32,
 		ptr: ^Struct,
 	}
 	stru: Struct = {
-		i = 1,
-		j = 2,
-		k = 3,
 		x = 1,
 		y = 2,
 		z = 3,
 	}
+
 	Union :: union {
 		Struct,
 		Bit_Set,
 		Enum,
 	}
 	uni: Union = stru
+
 	Raw :: struct #raw_union {
 		stru: Struct,
 		bits: Bit_Set,
@@ -66,6 +70,7 @@ main :: proc() {
 	raw: Raw = {
 		enue = enum_val,
 	}
+
 	ptr := rawptr(uintptr(0xFB2A))
 	any_val: any = uni
 	id: typeid = typeid_of(int)
@@ -91,6 +96,13 @@ main :: proc() {
 		return
 	}
 
+	Using_Struct :: struct {
+		using _: Struct,
+		using _: Raw `imrefl:"read-only"`,
+		using _: Bit_Field,
+	}
+	using_struct: Using_Struct
+
 	for bootstrap.start_frame("Demo") {
 		imrefl.draw_value("int64", int64)
 		imrefl.draw_value("float32", float32)
@@ -115,6 +127,7 @@ main :: proc() {
 		imrefl.draw_value("mat", mat)
 		imrefl.draw_value("simd", simd)
 		imrefl.draw_value("fn", fn)
+		imrefl.draw_value("using_struct", using_struct)
 		bootstrap.end_frame()
 	}
 
