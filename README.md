@@ -36,8 +36,8 @@ ImReflect supports the full breadth of the Odin type system:
 | **Unions** | Shows the active variant tag and recursively renders its data |
 | **Raw Unions** | Expanded as a tree node |
 | **Pointers** | Shows the pointer address; typed pointers are recursively followed and their pointee is rendered |
-| **`any`** | Shows the `typeid` and recursively renders the contained value |
-| **`typeid`** | Displays the type name as text |
+| **any** | Shows the `typeid` and recursively renders the contained value |
+| **typeid** | Displays the type name as text |
 | **Arrays** | Expanded as indexed tree nodes |
 | **Slices** | Expanded as indexed tree nodes |
 | **Dynamic Arrays** | Expanded as indexed tree nodes |
