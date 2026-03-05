@@ -84,12 +84,20 @@ main :: proc() {
 
 	Struct :: struct {
 		x, y, z: f32,
-		ptr:     ^Struct,
+		ptr:     proc(rawptr) `imrefl:"callable"`,
+		invalid: proc() `imrefl:"callable"`,
 	}
 	stru: Struct = {
 		x = 1,
 		y = 2,
 		z = 3,
+		ptr = proc(this: rawptr) {
+			stru := (^Struct)(this)
+			stru.x = 10
+		},
+		invalid = proc() {
+			panic("I'm an invalid callable!")
+		}
 	}
 
 	Union :: union {

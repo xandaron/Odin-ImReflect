@@ -6,7 +6,7 @@ An [Odin](https://odin-lang.org/) package built on top of [Dear ImGui](https://g
 
 ## Overview
 
-ImReflect walks the Odin type system at runtime and renders an appropriate ImGui widget for every field it encounters. Pass any value to `draw_value` and get a full recursive inspector tree for free.
+ImReflect walks the Odin type system at runtime and renders an appropriate ImGui widget for every field it encounters. Pass any value to `draw_value` and get a full recursive inspector tree.
 
 This makes it ideal for:
 
@@ -52,8 +52,9 @@ My_Struct :: struct {
 |---|---|---|
 | `read-only` | `Read_Only` | Disables all editable widgets, rendering the value for inspection only. |
 | `padding` | `Padding` | Used to stop a struct field from being drawn. |
+| `callable` | `Callable` | Used to add a button to call a proc type with. The function should only accept one paramater, a pointer to the struct containing the function. Any return values are ignored. |
 
-You can also pass your flags directly to `draw_value`.
+You can also pass flags directly to `draw_value`.
 
 ### Quick Start with the Bootstrap Package
 
@@ -95,12 +96,11 @@ odin run demo
 
 ## Known Limitations & TODOs
 
+- **String editing** — string types are read-only.
 - **128-bit types** — not yet supported due to ImGui having no native 128-bit scalar type.
 - **Multi-pointers (`[^]T`)** — length information is not available via reflection, so only the raw address is shown. A future struct tag may be able to annotate a length.
 - **Enumerated arrays** — tree node is rendered but element iteration is not yet implemented.
 - **SOA pointers** — tree node renders but no data is displayed.
-- **Procedures** — only the function pointer address is shown. Invoking procedures via struct tags is a possible future feature.
-- **String editing** — future plans to use a string buffer to enable editing of strings.
 - **Struct tags** — plans to add more tags to allow for more control over field formatting.
 
 ---

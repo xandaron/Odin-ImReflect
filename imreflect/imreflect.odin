@@ -1,7 +1,7 @@
 package ImRefl
 
-import "core:math"
 import "base:runtime"
+import "core:math"
 import "core:fmt"
 import "core:reflect"
 import "core:strings"
@@ -11,6 +11,7 @@ import imgui "../imgui"
 
 Draw_Flag :: enum {
 	Read_Only,
+	Callable,
 
 	// For internal use.
 	Using_Flatten,
@@ -18,10 +19,12 @@ Draw_Flag :: enum {
 }
 Draw_Flags :: bit_set[Draw_Flag]
 
-draw_value :: proc(name: string, value: any, flags: Draw_Flags = nil) {
+DONT_PROPAGATE :: Draw_Flags{.Callable, .Using_Flatten}
+
+draw_value :: proc(name: string, value: any, flags: Draw_Flags = nil, ptr: rawptr = nil) {
 	switch reflect.type_kind(value.id) {
 	case .Invalid: panic("Invalid Type!")
-	case .Named:            draw_value(name, any{value.data, reflect.typeid_base(value.id)}, flags)
+	case .Named:            draw_value(name, any{value.data, reflect.typeid_base(value.id)}, flags, ptr)
 	case .Struct:           draw_struct_type(name, value, flags)
 	case .Bit_Field:        draw_bit_field_type(name, value, flags)
 	case .Union:            draw_union_type(name, value, flags)
@@ -45,7 +48,7 @@ draw_value :: proc(name: string, value: any, flags: Draw_Flags = nil) {
 	case .Multi_Pointer:    draw_multi_pointer_type(name, value, flags)
 	case .Simd_Vector:      draw_simd_vec_type(name, value, flags)
 	case .Soa_Pointer:      draw_soa_pointer_type(name, value, flags)
-	case .Procedure:        draw_proc_type(name, value, flags)
+	case .Procedure:        draw_proc_type(name, value, flags, ptr)
 	case .Parameters: // As is a proc param? I don't think we need to cover this.
 	}
 }
@@ -194,7 +197,8 @@ read_any_float_as :: proc(value: any, $T: typeid) -> T {
 tag_value_to_flag :: proc(str: string) -> (Draw_Flag, bool) {
 	switch str {
 	case "read-only": return .Read_Only, true
-	case "padding":   return .Padding,   true
+	case "padding":   return .Padding, true
+	case "callable":  return .Callable, true
 	}
 	return nil, false
 }
@@ -232,8 +236,9 @@ flags_from_field_tag :: proc(tag: reflect.Struct_Tag) -> (flags: Draw_Flags) {
 draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	struct_content :: proc(name: string, value: any, flags: Draw_Flags) {
 		bytes := ([^]byte)(value.data)
+		propagate_flags := flags - DONT_PROPAGATE
 		for &field in reflect.struct_fields_zipped(value.id) {
-			field_flags := flags + flags_from_field_tag(field.tag)
+			field_flags := propagate_flags + flags_from_field_tag(field.tag)
 			if .Padding in field_flags {
 				continue
 			}
@@ -241,7 +246,7 @@ draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 			if field.is_using && field.name == "_" {
 				field_flags += {.Using_Flatten}
 			}
-			draw_value(field.name, any{&bytes[field.offset], field.type.id}, field_flags)
+			draw_value(field.name, any{&bytes[field.offset], field.type.id}, field_flags, value.data)
 		}
 	}
 	assert_kind(reflect.type_kind(value.id), .Struct)
@@ -583,8 +588,8 @@ draw_bool_type :: proc(name: string, value: any, flags: Draw_Flags) {
 @(private)
 draw_integer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	kind := reflect.type_kind(value.id)
-	fmt.assertf(kind == .Integer || kind == .Float || kind == .Rune, "Value type kind must be %v, %v or %v! Got %v", reflect.Type_Kind.Integer, reflect.Type_Kind.Float, reflect.Type_Kind.Rune, kind)
-	
+	fmt.assertf(kind == .Integer || kind == .Rune, "Value type kind must be %v or %v! Got %v", reflect.Type_Kind.Integer, reflect.Type_Kind.Rune, kind)
+
 	imgui.Gui_PushIDPtr(value.data)
 	defer imgui.Gui_PopID()
 
@@ -804,7 +809,7 @@ draw_soa_pointer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 // What should this even do? I'll just write the proc address.
 // Maybe we can make the proc callable with struct tags.
 @(private)
-draw_proc_type :: proc(name: string, value: any, flags: Draw_Flags) {
+draw_proc_type :: proc(name: string, value: any, flags: Draw_Flags, ptr: rawptr = nil) {
 	assert_kind(reflect.type_kind(value.id), .Procedure)
 
 	imgui.Gui_PushIDPtr(value.data)
@@ -814,6 +819,19 @@ draw_proc_type :: proc(name: string, value: any, flags: Draw_Flags) {
 		defer imgui.Gui_TreePop()
 
 		imgui.Gui_Text(fmt.ctprintf("%v proc address", (^rawptr)(value.data)^))
+
+		if .Callable in flags {
+			proc_info := type_info_of(value.id).variant.(reflect.Type_Info_Procedure)
+			if proc_info.params != nil {
+				param_info := proc_info.params.variant.(reflect.Type_Info_Parameters)
+				if len(param_info.types) == 1 && param_info.types[0].id == rawptr {
+					imgui.Gui_SameLine()
+					if imgui.Gui_Button("call") {
+						(^proc(rawptr))(value.data)^(ptr)
+					}
+				}
+			}
+		}
 	}
 }
 
