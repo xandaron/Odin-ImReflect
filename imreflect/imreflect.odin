@@ -1,5 +1,6 @@
 package ImRefl
 
+import "core:math/bits"
 import "base:runtime"
 import "core:fmt"
 import "core:reflect"
@@ -33,7 +34,7 @@ draw_value :: proc(name: string, value: any, flags: Draw_Flags = nil) {
 	case .Complex:          draw_complex_type(name, value, flags)
 	case .Quaternion:       draw_quat_type(name, value, flags)
 	case .Boolean:          draw_bool_type(name, value, flags)
-	case .Integer, .Rune:   draw_literal_type(name, value, flags)
+	case .Integer, .Rune:   draw_integer_type(name, value, flags)
 	case .Float:            draw_float_type(name,value, flags)
 	case .Map:              draw_map_type(name, value, flags)
 	case .Matrix:           draw_matrix_type(name, value, flags)
@@ -55,61 +56,56 @@ assert_kind :: #force_inline proc(got, expected: reflect.Type_Kind, loc := #call
 }
 
 @(private)
-type_id_to_data_type :: proc(id: typeid) -> imgui.GuiDataType {
-	switch id { // what should I do with be and le types? I might have to convert the type first
-	case i8:        return .S8
-	case u8, byte:  return .U8
-	case i16:       return .S16
-	case u16, rune: return .U16
-	case i32:       return .S32
-	case u32:       return .U32
-	case i64:       return .S64
-	case u64:       return .U64
-	case int:       return .S64 when size_of(    int) == 8 else .S32
-	case uint:      return .U64 when size_of(   uint) == 8 else .U32
-	case uintptr:   return .U64 when size_of(uintptr) == 8 else .U32
-	// TODO: Idk what to do here. Maybe we can use s16 with some funky stuff?
-	// Maybe we just have to cast to a storage f32 and back.
-	// case f16:
-	case f32:       return .Float
-	case f64:       return .Double
+strip_endianness :: proc(type: typeid) -> typeid {
+	switch type {
+	case u16le,  u16be:  return u16
+	case u32le,  u32be:  return u32
+	case u64le,  u64be:  return u64
+	case u128le, u128be: return u128
+	case i16le,  i16be:  return i16
+	case i32le,  i32be:  return i32
+	case i64le,  i64be:  return i64
+	case i128le, i128be: return i128
+	case f16le,  f16be:  return f16
+	case f32le,  f32be:  return f32
+	case f64le,  f64be:  return f64
 	}
-	panic("Invalid type id!")
+	return type // If not an endian type just return the original.
 }
 
 @(private)
 write_int_to_any :: proc(i: $T, value: any) {
 	switch runtime.typeid_underlying(value.id) {
-	case i8:      (^i8     )(value.data)^ = auto_cast i
-	case i16:     (^i16    )(value.data)^ = auto_cast i
-	case i32:     (^i32    )(value.data)^ = auto_cast i
-	case i64:     (^i64    )(value.data)^ = auto_cast i
-	case i128:    (^i128   )(value.data)^ = auto_cast i
-	case int:     (^int    )(value.data)^ = auto_cast i
-	case u8:      (^u8     )(value.data)^ = auto_cast i
-	case u16:     (^u16    )(value.data)^ = auto_cast i
-	case u32:     (^u32    )(value.data)^ = auto_cast i
-	case u64:     (^u64    )(value.data)^ = auto_cast i
-	case u128:    (^u128   )(value.data)^ = auto_cast i
-	case uint:    (^uint   )(value.data)^ = auto_cast i
-	case uintptr: (^uintptr)(value.data)^ = auto_cast i
-	case u16le:   (^u16le  )(value.data)^ = auto_cast i
-	case u32le:   (^u32le  )(value.data)^ = auto_cast i
-	case u64le:   (^u64le  )(value.data)^ = auto_cast i
-	case u128le:  (^u128le )(value.data)^ = auto_cast i
-	case i16le:   (^i16le  )(value.data)^ = auto_cast i
-	case i32le:   (^i32le  )(value.data)^ = auto_cast i
-	case i64le:   (^i64le  )(value.data)^ = auto_cast i
-	case i128le:  (^i128le )(value.data)^ = auto_cast i
-	case u16be:   (^u16be  )(value.data)^ = auto_cast i
-	case u32be:   (^u32be  )(value.data)^ = auto_cast i
-	case u64be:   (^u64be  )(value.data)^ = auto_cast i
-	case u128be:  (^u128be )(value.data)^ = auto_cast i
-	case i16be:   (^i16be  )(value.data)^ = auto_cast i
-	case i32be:   (^i32be  )(value.data)^ = auto_cast i
-	case i64be:   (^i64be  )(value.data)^ = auto_cast i
-	case i128be:  (^i128be )(value.data)^ = auto_cast i
-	case rune:    (^rune   )(value.data)^ = auto_cast i
+	case i8:      (^i8     )(value.data)^ = i8(i)
+	case i16:     (^i16    )(value.data)^ = i16(i)
+	case i32:     (^i32    )(value.data)^ = i32(i)
+	case i64:     (^i64    )(value.data)^ = i64(i)
+	case i128:    (^i128   )(value.data)^ = i128(i)
+	case int:     (^int    )(value.data)^ = int(i)
+	case u8:      (^u8     )(value.data)^ = u8(i)
+	case u16:     (^u16    )(value.data)^ = u16(i)
+	case u32:     (^u32    )(value.data)^ = u32(i)
+	case u64:     (^u64    )(value.data)^ = u64(i)
+	case u128:    (^u128   )(value.data)^ = u128(i)
+	case uint:    (^uint   )(value.data)^ = uint(i)
+	case uintptr: (^uintptr)(value.data)^ = uintptr(i)
+	case u16le:   (^u16le  )(value.data)^ = u16le(i)
+	case u32le:   (^u32le  )(value.data)^ = u32le(i)
+	case u64le:   (^u64le  )(value.data)^ = u64le(i)
+	case u128le:  (^u128le )(value.data)^ = u128le(i)
+	case i16le:   (^i16le  )(value.data)^ = i16le(i)
+	case i32le:   (^i32le  )(value.data)^ = i32le(i)
+	case i64le:   (^i64le  )(value.data)^ = i64le(i)
+	case i128le:  (^i128le )(value.data)^ = i128le(i)
+	case u16be:   (^u16be  )(value.data)^ = u16be(i)
+	case u32be:   (^u32be  )(value.data)^ = u32be(i)
+	case u64be:   (^u64be  )(value.data)^ = u64be(i)
+	case u128be:  (^u128be )(value.data)^ = u128be(i)
+	case i16be:   (^i16be  )(value.data)^ = i16be(i)
+	case i32be:   (^i32be  )(value.data)^ = i32be(i)
+	case i64be:   (^i64be  )(value.data)^ = i64be(i)
+	case i128be:  (^i128be )(value.data)^ = i128be(i)
+	case rune:    (^rune   )(value.data)^ = rune(i)
 	case: fmt.panicf("Non-int typeid: %v", value.id)
 	}
 }
@@ -117,52 +113,52 @@ write_int_to_any :: proc(i: $T, value: any) {
 @(private)
 read_any_int_as :: proc(value: any, $T: typeid) -> T {
 	switch runtime.typeid_underlying(value.id) {
-	case i8:      return auto_cast (^i8     )(value.data)^
-	case i16:     return auto_cast (^i16    )(value.data)^
-	case i32:     return auto_cast (^i32    )(value.data)^
-	case i64:     return auto_cast (^i64    )(value.data)^
-	case i128:    return auto_cast (^i128   )(value.data)^
-	case int:     return auto_cast (^int    )(value.data)^
-	case u8:      return auto_cast (^u8     )(value.data)^
-	case u16:     return auto_cast (^u16    )(value.data)^
-	case u32:     return auto_cast (^u32    )(value.data)^
-	case u64:     return auto_cast (^u64    )(value.data)^
-	case u128:    return auto_cast (^u128   )(value.data)^
-	case uint:    return auto_cast (^uint   )(value.data)^
-	case uintptr: return auto_cast (^uintptr)(value.data)^
-	case u16le:   return auto_cast (^u16le  )(value.data)^
-	case u32le:   return auto_cast (^u32le  )(value.data)^
-	case u64le:   return auto_cast (^u64le  )(value.data)^
-	case u128le:  return auto_cast (^u128le )(value.data)^
-	case i16le:   return auto_cast (^i16le  )(value.data)^
-	case i32le:   return auto_cast (^i32le  )(value.data)^
-	case i64le:   return auto_cast (^i64le  )(value.data)^
-	case i128le:  return auto_cast (^i128le )(value.data)^
-	case u16be:   return auto_cast (^u16be  )(value.data)^
-	case u32be:   return auto_cast (^u32be  )(value.data)^
-	case u64be:   return auto_cast (^u64be  )(value.data)^
-	case u128be:  return auto_cast (^u128be )(value.data)^
-	case i16be:   return auto_cast (^i16be  )(value.data)^
-	case i32be:   return auto_cast (^i32be  )(value.data)^
-	case i64be:   return auto_cast (^i64be  )(value.data)^
-	case i128be:  return auto_cast (^i128be )(value.data)^
-	case rune:    return auto_cast (^rune   )(value.data)^
+	case i8:      return T((^i8     )(value.data)^)
+	case i16:     return T((^i16    )(value.data)^)
+	case i32:     return T((^i32    )(value.data)^)
+	case i64:     return T((^i64    )(value.data)^)
+	case i128:    return T((^i128   )(value.data)^)
+	case int:     return T((^int    )(value.data)^)
+	case u8:      return T((^u8     )(value.data)^)
+	case u16:     return T((^u16    )(value.data)^)
+	case u32:     return T((^u32    )(value.data)^)
+	case u64:     return T((^u64    )(value.data)^)
+	case u128:    return T((^u128   )(value.data)^)
+	case uint:    return T((^uint   )(value.data)^)
+	case uintptr: return T((^uintptr)(value.data)^)
+	case u16le:   return T((^u16le  )(value.data)^)
+	case u32le:   return T((^u32le  )(value.data)^)
+	case u64le:   return T((^u64le  )(value.data)^)
+	case u128le:  return T((^u128le )(value.data)^)
+	case i16le:   return T((^i16le  )(value.data)^)
+	case i32le:   return T((^i32le  )(value.data)^)
+	case i64le:   return T((^i64le  )(value.data)^)
+	case i128le:  return T((^i128le )(value.data)^)
+	case u16be:   return T((^u16be  )(value.data)^)
+	case u32be:   return T((^u32be  )(value.data)^)
+	case u64be:   return T((^u64be  )(value.data)^)
+	case u128be:  return T((^u128be )(value.data)^)
+	case i16be:   return T((^i16be  )(value.data)^)
+	case i32be:   return T((^i32be  )(value.data)^)
+	case i64be:   return T((^i64be  )(value.data)^)
+	case i128be:  return T((^i128be )(value.data)^)
+	case rune:    return T((^rune   )(value.data)^)
 	}
-	fmt.panicf("Non supported typeid: %v", value.id)
+	fmt.panicf("Non-int typeid: %v", value.id)
 }
 
 @(private)
 write_float_to_any :: proc(f: $T, value: any) {
 	switch runtime.typeid_underlying(value.id) {
-	case f16:   (^f16  )(value.data)^ = auto_cast f
-	case f32:   (^f32  )(value.data)^ = auto_cast f
-	case f64:   (^f64  )(value.data)^ = auto_cast f
-	case f16le: (^f16le)(value.data)^ = auto_cast f
-	case f32le: (^f32le)(value.data)^ = auto_cast f
-	case f64le: (^f64le)(value.data)^ = auto_cast f
-	case f16be: (^f16be)(value.data)^ = auto_cast f
-	case f32be: (^f32be)(value.data)^ = auto_cast f
-	case f64be: (^f64be)(value.data)^ = auto_cast f
+	case f16:   (^f16  )(value.data)^ = f16(f)
+	case f32:   (^f32  )(value.data)^ = f32(f)
+	case f64:   (^f64  )(value.data)^ = f64(f)
+	case f16le: (^f16le)(value.data)^ = f16le(f)
+	case f32le: (^f32le)(value.data)^ = f32le(f)
+	case f64le: (^f64le)(value.data)^ = f64le(f)
+	case f16be: (^f16be)(value.data)^ = f16be(f)
+	case f32be: (^f32be)(value.data)^ = f32be(f)
+	case f64be: (^f64be)(value.data)^ = f64be(f)
 	case: fmt.panicf("Non-float typeid: %v", value.id)
 	}
 }
@@ -170,17 +166,17 @@ write_float_to_any :: proc(f: $T, value: any) {
 @(private)
 read_any_float_as :: proc(value: any, $T: typeid) -> T {
 	switch runtime.typeid_underlying(value.id) {
-	case f16:   return auto_cast (^f16  )(value.data)^
-	case f32:   return auto_cast (^f32  )(value.data)^
-	case f64:   return auto_cast (^f64  )(value.data)^
-	case f16le: return auto_cast (^f16le)(value.data)^
-	case f32le: return auto_cast (^f32le)(value.data)^
-	case f64le: return auto_cast (^f64le)(value.data)^
-	case f16be: return auto_cast (^f16be)(value.data)^
-	case f32be: return auto_cast (^f32be)(value.data)^
-	case f64be: return auto_cast (^f64be)(value.data)^
+	case f16:   return T((^f16  )(value.data)^)
+	case f32:   return T((^f32  )(value.data)^)
+	case f64:   return T((^f64  )(value.data)^)
+	case f16le: return T((^f16le)(value.data)^)
+	case f32le: return T((^f32le)(value.data)^)
+	case f64le: return T((^f64le)(value.data)^)
+	case f16be: return T((^f16be)(value.data)^)
+	case f32be: return T((^f32be)(value.data)^)
+	case f64be: return T((^f64be)(value.data)^)
 	}
-	fmt.panicf("Non supported typeid: %v", value.id)
+	fmt.panicf("Non-float typeid: %v", value.id)
 }
 
 @(private)
@@ -255,11 +251,48 @@ draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 @(private)
 draw_bit_field_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	bit_field_content :: proc(name: string, value: any, flags: Draw_Flags) {
-		bytes := ([^]byte)(value.data)
-		for &field in reflect.bit_fields_zipped(value.id) {
-			// TODO: We probably have to parse these differently due to them only occupying a set number of bits
-			draw_value(field.name, any{&bytes[field.offset], field.type.id}, flags + flags_from_field_tag(field.tag))
+		value_u128 := read_any_int_as(value, u128)
+
+		// If someone on a big endian system could test that this works for them I would appreciate it.
+		// We could avoid this nonsence by casting to a type that preserves endianness but I'm not sure how we'd do that.
+		flip_offset := false
+		#partial switch reflect.type_info_core(type_info_of(value.id)).variant.(reflect.Type_Info_Integer).endianness {
+		case .Little:   flip_offset = ODIN_ENDIAN != .Little
+		case .Big:      flip_offset = ODIN_ENDIAN != .Big
 		}
+		for &field in reflect.bit_fields_zipped(value.id) {
+			field_offset := flip_offset ? uintptr(type_info_of(value.id).size * 8) - field.size - field.offset : field.offset
+			mask: u128 = (1 << field.size) - 1
+
+			tmp := value_u128 & (mask << field_offset)
+			// This clears all set bits in the applicable range so we can set them later
+			value_u128 ~= tmp
+			// Odin enforces bit fields size cant exceed 8 bytes so we could downcast to u64.
+			// Might be a good idea to improve performance as reduces the number of u128 math ops?
+			tmp = tmp >> field_offset
+
+			if reflect.is_signed(field.type) && (1 << (field.size - 1)) & tmp != 0 {
+				// Sign extend
+				tmp |= ~mask
+			}
+
+			// We already converted the values endianness to the platforms default so we should convert typeid to platform default
+			draw_value(field.name, any{&tmp, strip_endianness(field.type.id)}, flags + flags_from_field_tag(field.tag))
+
+			if reflect.is_signed(field.type) {
+				// We can't just check tmp < 0 as draw_value won't set all the upper bits
+				if (1 << uint((field.type.size * 8) - 1)) & tmp != 0 {
+					tmp = max(tmp, ~(mask >> 1))
+				} else {
+					tmp = min(tmp, mask >> 1)
+				}
+			} else {
+				tmp = min(tmp, mask)
+			}
+
+			value_u128 |= (tmp & mask) << field_offset
+		}
+		write_int_to_any(value_u128, value)
 	}
 	assert_kind(reflect.type_kind(value.id), .Bit_Field)
 
@@ -317,20 +350,18 @@ draw_bit_set_type :: proc(name: string, value: any, flags: Draw_Flags) {
 		set_info := type_info.variant.(reflect.Type_Info_Bit_Set)
 
 		value.id = runtime.typeid_underlying(value.id)
-		value_u64 := read_any_int_as(value, u64)
+		value_u128 := read_any_int_as(value, u128)
 
 		imgui.Gui_BeginDisabled(.Read_Only in flags)
 		defer imgui.Gui_EndDisabled()
 
-		new_val: u64
 		for &enum_value in reflect.enum_fields_zipped(set_info.elem.id) {
-			active := (1 << u64(enum_value.value)) & value_u64 != 0
-			imgui.Gui_Checkbox(fmt.ctprint(enum_value.name), &active)
-			if active {
-				new_val += 1 << u64(enum_value.value)
+			active := (1 << u64(enum_value.value)) & value_u128 != 0
+			if imgui.Gui_Checkbox(fmt.ctprint(enum_value.name), &active) {
+				value_u128 ~= (1 << u64(enum_value.value))
 			}
 		}
-		write_int_to_any(new_val, value)
+		write_int_to_any(value_u128, value)
 	}
 }
 
@@ -535,7 +566,7 @@ draw_bool_type :: proc(name: string, value: any, flags: Draw_Flags) {
 }
 
 @(private)
-draw_literal_type :: proc(name: string, value: any, flags: Draw_Flags) {
+draw_integer_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	kind := reflect.type_kind(value.id)
 	fmt.assertf(kind == .Integer || kind == .Float || kind == .Rune, "Value type kind must be %v, %v or %v! Got %v", reflect.Type_Kind.Integer, reflect.Type_Kind.Float, reflect.Type_Kind.Rune, kind)
 	
@@ -615,7 +646,6 @@ draw_matrix_type :: proc(name: string, value: any, flags: Draw_Flags) {
 		row_stride := matrix_info.layout == .Row_Major ? (matrix_info.elem_size * matrix_info.column_count) : matrix_info.elem_size
 		column_stride := matrix_info.layout == .Column_Major ? (matrix_info.elem_size * matrix_info.row_count) : matrix_info.elem_size
 
-		data_type := type_id_to_data_type(matrix_info.elem.id)
 		width := (imgui.Gui_GetContentRegionAvail().x - imgui.Gui_GetStyle().ItemSpacing.x * 3) / f32(matrix_info.column_count)
 		bytes := ([^]byte)(value.data)
 
@@ -630,10 +660,7 @@ draw_matrix_type :: proc(name: string, value: any, flags: Draw_Flags) {
 				imgui.Gui_PushIDPtr(ptr)
 				defer imgui.Gui_PopID()
 
-				imgui.Gui_BeginDisabled(.Read_Only in flags)
-				defer imgui.Gui_EndDisabled()
-
-				imgui.Gui_InputScalar("", data_type, ptr)
+				draw_value("", any{ptr, matrix_info.elem.id}, flags)
 			}
 		}
 	}

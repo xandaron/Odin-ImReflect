@@ -16,6 +16,8 @@ main :: proc() {
 	defer bootstrap.shutdown()
 
 	int64: i64 = 64
+	int64le: i64le = 64
+	int64be: i64be = 64
 	float32: f32 = 3.1415926
 	bool32: b32 = true
 	str: string = "Test string!"
@@ -28,19 +30,45 @@ main :: proc() {
 		_2,
 		_3,
 	}
-	Bit_Set :: bit_set[Enum]
+	Bit_Set :: bit_set[Enum; u128]
 	enum_val: Enum = ._2
 	bits: Bit_Set = {._0, ._3}
 
 	Bit_Field :: bit_field u32 {
 		i: u32 | 8,
-		j: u32 | 8,
+		j: i32 | 8,
 		k: u32 | 8,
 		w: u32 | 8,
 	}
 	field: Bit_Field = {
 		i = 10,
-		j = 30,
+		j = -10,
+		k = 2,
+		w = 100,
+	}
+
+	Bit_Field_Le :: bit_field u32le {
+		i: u32le | 8,
+		j: i32le | 8,
+		k: u32le | 8,
+		w: u32le | 8,
+	}
+	field_le: Bit_Field_Le = {
+		i = 10,
+		j = -10,
+		k = 2,
+		w = 100,
+	}
+
+	Bit_Field_Be :: bit_field u32be {
+		i: u32be | 8,
+		j: i32be | 8,
+		k: u32be | 8,
+		w: u32be | 8,
+	}
+	field_be: Bit_Field_Be = {
+		i = 10,
+		j = -10,
 		k = 2,
 		w = 100,
 	}
@@ -106,6 +134,8 @@ main :: proc() {
 
 	for bootstrap.start_frame("Demo") {
 		imrefl.draw_value("int64", int64)
+		imrefl.draw_value("int64le", int64le)
+		imrefl.draw_value("int64be", int64be)
 		imrefl.draw_value("float32", float32)
 		imrefl.draw_value("bool32", bool32)
 		imrefl.draw_value("str", str)
@@ -114,6 +144,8 @@ main :: proc() {
 		imrefl.draw_value("enum_val", enum_val)
 		imrefl.draw_value("bits", bits)
 		imrefl.draw_value("field", field)
+		imrefl.draw_value("field_le", field_le)
+		imrefl.draw_value("field_be", field_be)
 		imrefl.draw_value("stru", stru)
 		imrefl.draw_value("uni", uni)
 		imrefl.draw_value("raw", raw)
