@@ -1,6 +1,6 @@
 package ImRefl
 
-import "core:math/bits"
+import "core:math"
 import "base:runtime"
 import "core:fmt"
 import "core:reflect"
@@ -58,19 +58,30 @@ assert_kind :: #force_inline proc(got, expected: reflect.Type_Kind, loc := #call
 @(private)
 strip_endianness :: proc(type: typeid) -> typeid {
 	switch type {
-	case u16le,  u16be:  return u16
-	case u32le,  u32be:  return u32
-	case u64le,  u64be:  return u64
-	case u128le, u128be: return u128
 	case i16le,  i16be:  return i16
+	case u16le,  u16be:  return u16
 	case i32le,  i32be:  return i32
+	case u32le,  u32be:  return u32
 	case i64le,  i64be:  return i64
+	case u64le,  u64be:  return u64
 	case i128le, i128be: return i128
+	case u128le, u128be: return u128
 	case f16le,  f16be:  return f16
 	case f32le,  f32be:  return f32
 	case f64le,  f64be:  return f64
 	}
 	return type // If not an endian type just return the original.
+}
+
+@(private)
+endian_swap :: proc(ptr: rawptr, #any_int len: uint) {
+	buf := ([^]byte)(ptr)
+	for idx in 0..<(len/2) {
+		// Swap byte order
+		buf[idx]       ~= buf[len-1-idx]
+		buf[len-idx-1] ~= buf[idx]
+		buf[idx]       ~= buf[len-1-idx]
+	}
 }
 
 @(private)
@@ -251,23 +262,34 @@ draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 @(private)
 draw_bit_field_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	bit_field_content :: proc(name: string, value: any, flags: Draw_Flags) {
-		// TODO: Fix for be types on le platforms and vice versa
-		ptr := uintptr(value.data)
+		// Unteseted on big-endian platforms.
+		swap_endian := false
+		when ODIN_ENDIAN == .Little {
+			swap_endian = reflect.is_endian_big(reflect.type_info_core(type_info_of(value.id)))
+		} else when ODIN_ENDIAN == .Big {
+			swap_endian = reflect.is_endian_little(reflect.type_info_core(type_info_of(value.id)))
+		}
+
+		buf := ([^]byte)(value.data)
 		for &field in reflect.bit_fields_zipped(value.id) {
 			mask: u64 = (1 << field.size) - 1
 			idx := field.offset / 8
 			offset := field.offset % 8
-			data_ptr := (^u128)(ptr + idx)
+			data_ptr := (^u128)(&buf[idx])
 			value_u128 := (data_ptr^) & (u128(mask) << offset)
 			data_ptr^ ~= value_u128 // Zero bits withing fields bit range
 			// It should be safe to downcast as the field size cant be larger that 64 bits
 			value_u64 := u64(value_u128 >> offset)
 
+			if swap_endian {
+				endian_swap(&value_u64, uint(math.ceil(f64(field.size) / 8.0)))
+			}
+
 			if reflect.is_signed(field.type) && (1 << (field.size - 1)) & value_u64 != 0 {
 				value_u64 |= ~mask // Sign extend if negative.
 			}
 
-			draw_value(field.name, any{&value_u64, field.type.id}, flags + flags_from_field_tag(field.tag))
+			draw_value(field.name, any{&value_u64, strip_endianness(field.type.id)}, flags + flags_from_field_tag(field.tag))
 
 			if reflect.is_signed(field.type) {
 				// We can't just check tmp < 0 as draw_value won't set the upper bits if size_of(field.type.id) < 8
@@ -279,6 +301,11 @@ draw_bit_field_type :: proc(name: string, value: any, flags: Draw_Flags) {
 			} else {
 				value_u64 = min(value_u64, mask)
 			}
+
+			if swap_endian {
+				endian_swap(&value_u64, uint(math.ceil(f64(field.size) / 8.0)))
+			}
+
 			data_ptr^ |= u128(value_u64 & mask) << offset
 		}
 	}
