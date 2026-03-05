@@ -61,12 +61,21 @@ main :: proc() {
 	}
 
 	Bit_Field_Be :: bit_field u32be {
-		i: u32be | 8,
-		j: i32be | 8,
-		k: u32be | 8,
-		w: u32be | 8,
+		i: u32be | 16,
+		j: i32be | 16,
 	}
 	field_be: Bit_Field_Be = {
+		i = 10,
+		j = -10,
+	}
+
+	Bit_Field_Array :: bit_field [400]byte {
+		i: u32 | 8,
+		j: i32 | 8,
+		k: u32 | 8,
+		w: u32 | 8,
+	}
+	field_arr: Bit_Field_Array = {
 		i = 10,
 		j = -10,
 		k = 2,
@@ -146,6 +155,7 @@ main :: proc() {
 		imrefl.draw_value("field", field)
 		imrefl.draw_value("field_le", field_le)
 		imrefl.draw_value("field_be", field_be)
+		imrefl.draw_value("field_arr", field_arr)
 		imrefl.draw_value("stru", stru)
 		imrefl.draw_value("uni", uni)
 		imrefl.draw_value("raw", raw)

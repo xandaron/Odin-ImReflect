@@ -251,48 +251,36 @@ draw_struct_type :: proc(name: string, value: any, flags: Draw_Flags) {
 @(private)
 draw_bit_field_type :: proc(name: string, value: any, flags: Draw_Flags) {
 	bit_field_content :: proc(name: string, value: any, flags: Draw_Flags) {
-		value_u128 := read_any_int_as(value, u128)
-
-		// If someone on a big endian system could test that this works for them I would appreciate it.
-		// We could avoid this nonsence by casting to a type that preserves endianness but I'm not sure how we'd do that.
-		flip_offset := false
-		#partial switch reflect.type_info_core(type_info_of(value.id)).variant.(reflect.Type_Info_Integer).endianness {
-		case .Little:   flip_offset = ODIN_ENDIAN != .Little
-		case .Big:      flip_offset = ODIN_ENDIAN != .Big
-		}
+		// TODO: Fix for be types on le platforms and vice versa
+		ptr := uintptr(value.data)
 		for &field in reflect.bit_fields_zipped(value.id) {
-			field_offset := flip_offset ? uintptr(type_info_of(value.id).size * 8) - field.size - field.offset : field.offset
-			mask: u128 = (1 << field.size) - 1
+			mask: u64 = (1 << field.size) - 1
+			idx := field.offset / 8
+			offset := field.offset % 8
+			data_ptr := (^u128)(ptr + idx)
+			value_u128 := (data_ptr^) & (u128(mask) << offset)
+			data_ptr^ ~= value_u128 // Zero bits withing fields bit range
+			// It should be safe to downcast as the field size cant be larger that 64 bits
+			value_u64 := u64(value_u128 >> offset)
 
-			tmp := value_u128 & (mask << field_offset)
-			// This clears all set bits in the applicable range so we can set them later
-			value_u128 ~= tmp
-			// Odin enforces bit fields size cant exceed 8 bytes so we could downcast to u64.
-			// Might be a good idea to improve performance as reduces the number of u128 math ops?
-			tmp = tmp >> field_offset
-
-			if reflect.is_signed(field.type) && (1 << (field.size - 1)) & tmp != 0 {
-				// Sign extend
-				tmp |= ~mask
+			if reflect.is_signed(field.type) && (1 << (field.size - 1)) & value_u64 != 0 {
+				value_u64 |= ~mask // Sign extend if negative.
 			}
 
-			// We already converted the values endianness to the platforms default so we should convert typeid to platform default
-			draw_value(field.name, any{&tmp, strip_endianness(field.type.id)}, flags + flags_from_field_tag(field.tag))
+			draw_value(field.name, any{&value_u64, field.type.id}, flags + flags_from_field_tag(field.tag))
 
 			if reflect.is_signed(field.type) {
-				// We can't just check tmp < 0 as draw_value won't set all the upper bits
-				if (1 << uint((field.type.size * 8) - 1)) & tmp != 0 {
-					tmp = max(tmp, ~(mask >> 1))
+				// We can't just check tmp < 0 as draw_value won't set the upper bits if size_of(field.type.id) < 8
+				if (1 << u64(field.type.size * 8 - 1)) & value_u64 != 0 {
+					value_u64 = max(value_u64, ~(mask >> 1))
 				} else {
-					tmp = min(tmp, mask >> 1)
+					value_u64 = min(value_u64, mask >> 1)
 				}
 			} else {
-				tmp = min(tmp, mask)
+				value_u64 = min(value_u64, mask)
 			}
-
-			value_u128 |= (tmp & mask) << field_offset
+			data_ptr^ |= u128(value_u64 & mask) << offset
 		}
-		write_int_to_any(value_u128, value)
 	}
 	assert_kind(reflect.type_kind(value.id), .Bit_Field)
 
